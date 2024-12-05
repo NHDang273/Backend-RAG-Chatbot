@@ -14,7 +14,7 @@ Before running the project, ensure you have the following installed:
 1. **Clone the repository**:
     ```bash
     git clone <repository_url>
-    cd chatbot_backend
+    cd Backend-RAG-Chatbot
     ```
 
 2. **Create a virtual environment**:
