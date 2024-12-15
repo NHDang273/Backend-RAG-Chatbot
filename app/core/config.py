@@ -1,5 +1,7 @@
 from pydantic import BaseSettings, Field
 from dotenv import load_dotenv
+from pydantic import Field
+
 
 # Tải biến môi trường từ file .env
 load_dotenv()

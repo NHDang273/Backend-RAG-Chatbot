@@ -1,7 +1,8 @@
 from fastapi import FastAPI
-from app.routers import chat, health
+from app.routers import chat, health, documents
 from app.database.connection import connect_to_mongo, close_mongo_connection
 import logging
+
 
 # Cấu hình logging cho ứng dụng
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
@@ -13,6 +14,7 @@ app = FastAPI()
 # Đăng ký các router
 app.include_router(health.router, prefix="/api", tags=["Health"])
 app.include_router(chat.router, prefix="/api", tags=["Chat"])  # Chat có hỗ trợ WebSocket
+app.include_router(documents.router, prefix="/api", tags=["Documents"])
 
 # Kết nối MongoDB khi server khởi động
 @app.on_event("startup")
