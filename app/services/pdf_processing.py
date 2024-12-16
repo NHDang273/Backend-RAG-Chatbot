@@ -36,8 +36,8 @@ def save_text_to_csv(text, csv_path):
         cleaned_text = text.replace("\n", " ").replace("\r", " ")
         with open(csv_path, mode='w', newline='', encoding='utf-8') as file:
             writer = csv.writer(file)
-            writer.writerow(["Resume"])  
-            writer.writerow([cleaned_text])
+            writer.writerow(["Resume", "Data"])  
+            writer.writerow([csv_path, cleaned_text])  # Dữ liệu
         print(f"CSV file saved at: {csv_path}")
     except Exception as e:
         print(f"Error saving to CSV: {e}")
