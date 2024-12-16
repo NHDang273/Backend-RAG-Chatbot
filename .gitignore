@@ -32,3 +32,5 @@ test_*.py
 
 # Models file
 /models
+
+.env
