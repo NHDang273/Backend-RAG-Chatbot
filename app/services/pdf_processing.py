@@ -30,14 +30,14 @@ def extract_text_from_doc(doc_path):
         print(f"Error extracting text from DOC/DOCX: {e}")
         return ""
 
-def save_text_to_csv(text, csv_path):
+def save_text_to_csv(text, csv_path, source_pdf):
     """Save extracted text to a CSV file."""
     try:
         cleaned_text = text.replace("\n", " ").replace("\r", " ")
         with open(csv_path, mode='w', newline='', encoding='utf-8') as file:
             writer = csv.writer(file)
-            writer.writerow(["Resume", "Data"])  
-            writer.writerow([csv_path, cleaned_text])  # Dữ liệu
+            writer.writerow(["source", "Resume"])  
+            writer.writerow([source_pdf, cleaned_text])  # Dữ liệu
         print(f"CSV file saved at: {csv_path}")
     except Exception as e:
         print(f"Error saving to CSV: {e}")
@@ -54,7 +54,8 @@ def convert_to_csv(file_path, output_csv_path):
         return
     
     if text:
-        save_text_to_csv(text, output_csv_path)
+        last_folder = os.path.basename(os.path.normpath(file_path))
+        save_text_to_csv(text, output_csv_path, last_folder)
 
 # def process_file(input_file, output_csv):
 #     """Process file and convert it to CSV."""

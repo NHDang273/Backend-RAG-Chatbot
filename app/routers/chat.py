@@ -53,9 +53,7 @@ def load_csv_files():
     return raw_knowledge_base
 
 # Initialize the knowledge base
-RAW_KNOWLEDGE_BASE = load_csv_files()
-if RAW_KNOWLEDGE_BASE is None:
-    RAW_KNOWLEDGE_BASE = []
+RAW_KNOWLEDGE_BASE = load_csv_files() or []
 
 # Function to split documents into chunks
 def split_documents(chunk_size: int, knowledge_base: List[LangchainDocument]) -> List[LangchainDocument]:
@@ -137,11 +135,30 @@ class ConnectionManager:
     async def send_message(self, message: str, websocket: WebSocket):
         await websocket.send_text(message)
 
+    async def send_binary(self, data: bytes, websocket: WebSocket):
+        await websocket.send_bytes(data)
+
     async def broadcast(self, message: str):
         for connection in self.active_connections:
             await connection.send_text(message)
 
 manager = ConnectionManager()
+
+# Function to get PDF path from metadata
+def get_pdf_path_from_metadata(metadata):
+    """Retrieve PDF file path from metadata."""
+    pdf_filename = metadata.get('source')
+    if pdf_filename:
+        return Path("uploaded_files") / pdf_filename
+    return None
+
+# Function to send PDF file
+async def send_pdf_file(websocket: WebSocket, pdf_path: Path):
+    try:
+        with open(pdf_path, "rb") as pdf_file:
+            await manager.send_binary(pdf_file.read(), websocket)
+    except Exception as e:
+        await manager.send_message(f"Error sending PDF: {str(e)}", websocket)
 
 # WebSocket endpoint for chatbot
 @router.websocket("/chat/ws")
@@ -156,32 +173,41 @@ async def websocket_endpoint(websocket: WebSocket):
                 await manager.send_message("No data available", websocket)
                 continue
 
-            # Call model to generate response
             try:
-                response, metadata = answer_with_groq_api(question=data, knowledge_index=KNOWLEDGE_VECTOR_DATABASE)
+                # Generate response
+                response, metadata = answer_with_groq_api(data, KNOWLEDGE_VECTOR_DATABASE)
+                print(response)
+                print(metadata)
                 await manager.send_message(response, websocket)
+
+                # Send related PDF files
+                # for meta in metadata:
+                #     pdf_path = get_pdf_path_from_metadata(meta)
+                #     if pdf_path and pdf_path.exists():
+                #         await send_pdf_file(websocket, pdf_path)
+                #     else:
+                #         await manager.send_message(f"PDF not found: {meta.get('source')}", websocket)
+
             except Exception as e:
-                await manager.send_message(f"Error processing the request: {str(e)}", websocket)
+                await manager.send_message(f"Error: {str(e)}", websocket)
     except WebSocketDisconnect:
         manager.disconnect(websocket)
 
-# Watchdog handler to monitor CSV directory changes
+# Watchdog handler for CSV directory
 class CSVWatchdogHandler(FileSystemEventHandler):
     def on_modified(self, event):
         if event.src_path.endswith(".csv"):
             print("CSV file updated, reloading data...")
             global RAW_KNOWLEDGE_BASE
-            RAW_KNOWLEDGE_BASE = load_csv_files()
-            if RAW_KNOWLEDGE_BASE:
-                docs_processed = split_documents(512, RAW_KNOWLEDGE_BASE)
-                global KNOWLEDGE_VECTOR_DATABASE
-                KNOWLEDGE_VECTOR_DATABASE = FAISS.from_documents(docs_processed, embedding_model, distance_strategy="cosine")
+            RAW_KNOWLEDGE_BASE = load_csv_files() or []
+            docs_processed = split_documents(512, RAW_KNOWLEDGE_BASE)
+            global KNOWLEDGE_VECTOR_DATABASE
+            KNOWLEDGE_VECTOR_DATABASE = FAISS.from_documents(docs_processed, embedding_model, distance_strategy="cosine")
 
-# Watchdog observer to watch for changes in the CSV directory
+# Watchdog observer for CSV changes
 def start_watchdog():
-    event_handler = CSVWatchdogHandler()
     observer = Observer()
-    observer.schedule(event_handler, path=str(csv_folder), recursive=False)
+    observer.schedule(CSVWatchdogHandler(), path=str(csv_folder), recursive=False)
     observer.start()
 
 # Run watchdog in a separate thread
