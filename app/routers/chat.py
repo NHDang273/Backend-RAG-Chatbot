@@ -181,12 +181,12 @@ async def websocket_endpoint(websocket: WebSocket):
                 await manager.send_message(response, websocket)
 
                 # Send related PDF files
-                # for meta in metadata:
-                #     pdf_path = get_pdf_path_from_metadata(meta)
-                #     if pdf_path and pdf_path.exists():
-                #         await send_pdf_file(websocket, pdf_path)
-                #     else:
-                #         await manager.send_message(f"PDF not found: {meta.get('source')}", websocket)
+                for meta in metadata:
+                    pdf_path = get_pdf_path_from_metadata(meta)
+                    if pdf_path and pdf_path.exists():
+                        await send_pdf_file(websocket, pdf_path)
+                    else:
+                        await manager.send_message(f"PDF not found: {meta.get('source')}", websocket)
 
             except Exception as e:
                 await manager.send_message(f"Error: {str(e)}", websocket)
