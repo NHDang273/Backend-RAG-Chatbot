@@ -18,9 +18,6 @@ Before running the project, ensure you have the following installed:
     cd Backend-RAG-Chatbot
     ```
 
-1. **Create Models folder**:
-    Download model llama-2-7b-chat.Q2_K.gguf from https://huggingface.co/transformers/model_doc/gpt2.html into models folder
-
 2. **Create a virtual environment**:
     ```bash
     python -m venv venv
